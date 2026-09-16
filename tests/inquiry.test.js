@@ -14,6 +14,8 @@ const successfulProvider=(calls=[])=>async(url,init)=>{
 test('configuration never exposes keys and CRM configuration enables the form without e-mail',async()=>{
   const config=await (await handleInquiry(new Request('https://hubalk.pl/api/inquiry'),crmEnv)).json();
   assert.deepEqual(config,{ready:true,privacyNotice:'Test notice'});
+  const diagnostics=await (await handleInquiry(new Request('https://hubalk.pl/api/inquiry?diagnostics=configuration'),{...crmEnv,CRM_INQUIRY_SECRET:''})).json();
+  assert.deepEqual(diagnostics,{ready:false,checks:{ALLOWED_ORIGINS:true,CRM_INQUIRY_SECRET:false,CRM_SIWC_BYPASS_TOKEN:true,PRIVACY_NOTICE:true}});
   assert.equal((await handleInquiry(request(),{})).status,503);
   const calls=[];
   assert.deepEqual(await (await handleInquiry(request(),crmEnv,successfulProvider(calls))).json(),{ok:true,inquiryId:'inquiry-1',repeated:false});
