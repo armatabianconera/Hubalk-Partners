@@ -7,9 +7,9 @@ Rozwój sprzedaży i handel na rynkach Polski, Węgier i Bałkanów.
 
 ## Stan
 
-Gotowe: branding, komunikacja zespołowa, formularz potrzeb klienta, backend e-mail pod Vercela, obsługa błędów i testy. Zachowano istniejący projekt graficzny oraz lokalne zdjęcie i fonty.
+Gotowe: branding, komunikacja zespołowa, formularz potrzeb klienta, trwały zapis zapytań do CRM, opcjonalne powiadomienie e-mail pod Vercela, obsługa błędów i testy. Zachowano istniejący projekt graficzny oraz lokalne zdjęcie i fonty.
 
-Wysyłka wymaga własnej konfiguracji Resend, docelowej skrzynki oraz pełnej informacji o przetwarzaniu danych. Brak konfiguracji blokuje wysyłanie. Obecny podgląd Sites jest statyczny: pokazuje stronę i formularz, ale nie uruchamia funkcji Vercela. Wysyłka będzie działać na Vercelu po konfiguracji. Nie wykonano rzeczywistej wysyłki ani wdrożenia na Twoim koncie Vercel.
+Przyjmowanie zapytań wymaga sekretu integracji CRM, serwerowego tokenu prywatnego wdrożenia oraz pełnej informacji o przetwarzaniu danych. Resend i docelowa skrzynka są opcjonalne: awaria poczty nie powoduje utraty zapytania zapisanego w CRM. Obecny podgląd Sites jest statyczny: pokazuje stronę i formularz, ale nie uruchamia funkcji Vercela. Wysyłka będzie działać na Vercelu po konfiguracji.
 
 ## 1. VS Code
 
@@ -24,7 +24,7 @@ Projekt nie wymaga Reacta ani kompilowania. Do zmian tekstów i stylów wystarcz
 | `dist/app.js` | Menu, formularz, komunikaty, publiczne dane CONTACT |
 | `dist/assets/` | Zdjęcie, favicon i fonty |
 | `api/inquiry.js` | Funkcja Vercela |
-| `lib/inquiry.js` | Walidacja i wysyłka uporządkowanej wiadomości |
+| `lib/inquiry.js` | Walidacja, zapis zapytania do CRM i opcjonalne powiadomienie e-mail |
 | `.env.example` | Nazwy ustawień serwerowych; bez kluczy |
 | `vercel.json` | Hosting statyczny i nagłówki |
 
@@ -57,23 +57,28 @@ Podmień TWOJ-LOGIN. Klucze wpisuj w ustawieniach Vercela albo lokalnym `.env.lo
 
 Vercel łączy repozytorium GitHub z wdrożeniami: push na gałąź produkcyjną aktualizuje stronę. Pozostałe gałęzie mogą tworzyć podglądy. Dokumentacja: https://vercel.com/docs/git/vercel-for-github oraz https://vercel.com/docs/project-configuration/vercel-json . Funkcja bazuje na wspieranym eksporcie fetch: https://vercel.com/docs/functions/runtimes/node-js .
 
-## 4. Poczta
+## 4. CRM i poczta
+
+Najpierw ustaw połączenie z CRM. `CRM_INQUIRY_SECRET` musi mieć tę samą wartość co `INQUIRY_SECRET` w konfiguracji CRM. `CRM_SIWC_BYPASS_TOKEN` jest serwerowym tokenem prywatnego wdrożenia CRM. Obie wartości przechowuj wyłącznie jako sekrety Vercela. `CRM_INBOUND_URL` domyślnie wskazuje `https://app.hubalk.pl/api/crm/inbound`.
 
 Załóż konto Resend, dodaj posiadaną domenę i zweryfikuj ją przez rekordy DNS wskazane przez usługę. Możesz użyć wydzielonej subdomeny do wysyłki. Zachowaj istniejące rekordy obsługujące Waszą skrzynkę. Resend w tym projekcie wysyła powiadomienia; nie zastępuje skrzynki odbiorczej.
 
 | Zmienna | Co wpisać |
 |---|---|
-| RESEND_API_KEY | Klucz wysyłkowy Resend; sekret tylko na serwerze |
+| CRM_INBOUND_URL | `https://app.hubalk.pl/api/crm/inbound` |
+| CRM_INQUIRY_SECRET | Sekret integracji; identyczny z `INQUIRY_SECRET` po stronie CRM |
+| CRM_SIWC_BYPASS_TOKEN | Serwerowy token dostępu do prywatnego wdrożenia CRM |
+| RESEND_API_KEY | Opcjonalny klucz wysyłkowy Resend; sekret tylko na serwerze |
 | CONTACT_FROM | Nadawca w zweryfikowanej domenie, np. `Hubalk Partners <formularz@hubalk.pl>` — przykład, nie utworzony adres |
 | CONTACT_TO | Wasza istniejąca skrzynka, na którą mają trafiać zapytania |
 | ALLOWED_ORIGINS | `https://hubalk.pl,https://www.hubalk.pl` oraz dokładny adres Vercela, jeśli z niego korzystasz |
 | PRIVACY_NOTICE | Pełna, zatwierdzona informacja dla osoby wypełniającej formularz, z prawdziwymi danymi administratora |
 
-Nie wysyłaj klucza API w rozmowie. Wklej go bezpośrednio do ustawień Vercela. PRIVACY_NOTICE jest publicznie pokazywane przy formularzu; nie jest sekretem. Nie uzupełniliśmy danych prawnych fikcyjnymi informacjami.
+Nie wysyłaj sekretów w rozmowie. Wklej je bezpośrednio do ustawień Vercela. PRIVACY_NOTICE jest publicznie pokazywane przy formularzu; nie jest sekretem. Nie uzupełniliśmy danych prawnych fikcyjnymi informacjami.
 
 Dokumentacja nadawcy: https://resend.com/docs/dashboard/domains/introduction . Wysyłka: https://resend.com/docs/api-reference/emails/send-email . Ponawianie bez duplikatów: https://resend.com/docs/dashboard/emails/idempotency-keys . Zabezpieczenie przed duplikatami obowiązuje w oknie ważności kluczy po stronie Resend; nowa karta lub zmiana odpowiedzi tworzy nowe zapytanie.
 
-Backend ogranicza wielkość żądania, waliduje pola, wymaga dozwolonego originu i zawiera honeypot. To podstawowe filtry, nie pełna ochrona przed automatycznym spamem: origin można podrobić poza przeglądarką. Przed kampanią ustaw ograniczenie liczby żądań POST do `/api/inquiry` w firewallu Vercela odpowiednie do wybranego planu. Nie ma bazy CRM, automatycznego newslettera ani załączników. Dane trafiają do Resend i docelowej skrzynki. Ustal z administratorem zasady przechowywania oraz docelową informację prywatności.
+Backend ogranicza wielkość żądania, waliduje pola, wymaga dozwolonego originu i zawiera honeypot. CRM dodatkowo ogranicza liczbę przyjmowanych zapytań i rozpoznaje ponowienie po stałym identyfikatorze. Przed kampanią można dodać regułę ograniczającą POST do `/api/inquiry` w firewallu Vercela. Dane trafiają najpierw do CRM, a przy skonfigurowanym Resend także do docelowej skrzynki. Ustal z administratorem zasady przechowywania oraz docelową informację prywatności.
 
 ## 5. Co przychodzi w mailu
 

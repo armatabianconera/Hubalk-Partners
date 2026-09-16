@@ -10,13 +10,16 @@ Paczka zawiera aktualną stronę w czterech językach, wszystkie lokalne zasoby 
 6. Otwórz otrzymany adres vercel.app. Sprawdź wygląd, menu, cztery języki i telefon. Bez ustawień z punktu 9 wysyłka formularza pozostaje wyłączona.
 7. Settings → Domains: dodaj hubalk.pl oraz www.hubalk.pl. Ustaw hubalk.pl jako adres docelowy, a www jako przekierowanie do niego. Skopiuj dokładne rekordy DNS pokazane przez Vercel, nie wartości z cudzych poradników.
 8. nazwa.pl: Panel Klienta → Usługi → Domeny → hubalk.pl → konfiguruj → Ręczna konfiguracja DNS → ZMIEŃ. Ustaw rekord domeny głównej i rekord www zgodnie z Vercel. Jeśli nazwa.pl wymaga pełnej nazwy hosta, wpisz hubalk.pl lub www.hubalk.pl zamiast symbolu @. Usuń tylko sprzeczne rekordy dla tych samych hostów. Zachowaj rekordy poczty i weryfikacji; jeśli masz już pocztę w nazwa.pl, sprawdź wpływ przejścia na tryb ręczny na zarządzany DKIM. Nie zmieniaj serwerów nazw i nie kupuj osobnego hostingu ani SSL na potrzeby tego wdrożenia. Poczekaj na Valid Configuration w Vercel i automatyczny HTTPS.
-9. Formularz: załóż Resend, zweryfikuj domenę nadawcy rekordami DNS wskazanymi przez Resend. W Vercel → Settings → Environment Variables dodaj dla Production:
-   - RESEND_API_KEY: klucz Resend.
+9. Formularz: w Vercel → Settings → Environment Variables dodaj dla Production:
+   - CRM_INBOUND_URL: https://app.hubalk.pl/api/crm/inbound.
+   - CRM_INQUIRY_SECRET: sekret integracji zgodny z INQUIRY_SECRET ustawionym w CRM.
+   - CRM_SIWC_BYPASS_TOKEN: serwerowy token prywatnego wdrożenia CRM.
+   - RESEND_API_KEY: opcjonalny klucz Resend do powiadomień e-mail.
    - CONTACT_FROM: nadawca w zweryfikowanej domenie, np. Hubalk Partners <formularz@hubalk.pl>.
    - CONTACT_TO: istniejąca skrzynka odbiorcza zespołu.
    - ALLOWED_ORIGINS: https://hubalk.pl,https://www.hubalk.pl (dodaj dokładny adres vercel.app tylko jeśli chcesz z niego wysyłać testy).
    - PRIVACY_NOTICE, PRIVACY_NOTICE_HU, PRIVACY_NOTICE_SH, PRIVACY_NOTICE_EN: pełne informacje o przetwarzaniu danych, odpowiednio po polsku, węgiersku, serbsko-chorwacku i angielsku, z rzeczywistymi danymi administratora.
-10. Po zmianie zmiennych wybierz Deployments → ostatnie wdrożenie → Redeploy. Kluczy API nie wklejaj do kodu ani rozmowy. Resend wysyła wiadomości; nie tworzy skrzynki odbiorczej.
+10. Po zmianie zmiennych wybierz Deployments → ostatnie wdrożenie → Redeploy. Sekretów nie wklejaj do kodu ani rozmowy. Zapytanie jest najpierw zapisywane w CRM; Resend tylko opcjonalnie wysyła powiadomienie i nie tworzy skrzynki odbiorczej.
 11. Uzupełnij rzeczywisty kontakt w obiekcie CONTACT w dist/app.js. Przetestuj formularz z własnymi danymi we wszystkich czterech językach i potwierdź odbiór wiadomości. Sprawdź domenę główną i przekierowanie www w oknie prywatnym, bez logowania do Vercela.
 12. Obecnie meta robots i dist/robots.txt blokują indeksowanie. Nie przeszkadza to w otwieraniu strony pod domeną. Gdy strona ma trafić do Google, usuń blokady i dodaj właściwy canonical dla hubalk.pl.
 13. Kolejne poprawki: zmień pliki → zapisz → Stage → Commit → Push/Sync Changes. Push na gałąź produkcyjną uruchamia nowe wdrożenie w Vercel.
