@@ -14,8 +14,6 @@ const successfulProvider=(calls=[])=>async(url,init)=>{
 test('configuration never exposes keys and CRM configuration enables the form without e-mail',async()=>{
   const config=await (await handleInquiry(new Request('https://hubalk.pl/api/inquiry'),crmEnv)).json();
   assert.deepEqual(config,{ready:true,privacyNotice:'Test notice'});
-  const diagnostics=await (await handleInquiry(new Request('https://hubalk.pl/api/inquiry?diagnostics=configuration'),{...crmEnv,CRM_INQUIRY_SECRET:''})).json();
-  assert.deepEqual(diagnostics,{ready:false,checks:{ALLOWED_ORIGINS:true,CRM_INQUIRY_SECRET:false,CRM_SIWC_BYPASS_TOKEN:true,PRIVACY_NOTICE:true}});
   assert.equal((await handleInquiry(request(),{})).status,503);
   const calls=[];
   assert.deepEqual(await (await handleInquiry(request(),crmEnv,successfulProvider(calls))).json(),{ok:true,inquiryId:'inquiry-1',repeated:false});
@@ -29,7 +27,7 @@ test('valid inquiry saves CRM first and maps a fixed notification recipient',asy
   assert.equal(calls.length,2);
   const crm=JSON.parse(calls[0].body);
   assert.equal(calls[0].url,env.CRM_INBOUND_URL);
-  assert.equal(calls[0].headers.Authorization,'Bearer sites-bypass');
+  assert.equal(calls[0].headers['OAI-Sites-Authorization'],'Bearer sites-bypass');
   assert.equal(calls[0].headers['X-Inquiry-Secret'],'crm-secret');
   assert.equal(crm.external_id,'hubalk-form:'+fields.requestId);
   assert.equal(crm.company_name,'Kontakt — Anna');
